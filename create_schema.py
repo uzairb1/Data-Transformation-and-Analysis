@@ -1,0 +1,28 @@
+from pandasql import sqldf# type: ignore
+import pandas as pd
+import uuid
+
+data = pd.read_csv("de_challenge_sample_data.csv")
+data = data.rename(columns={"$schema":"schema"})
+data['editID'] = data[['comment', 'parsedcomment']].sum(axis=1).map(hash)
+data['userID'] = data[['user']].sum(axis=1).map(hash)
+data["editID"] = data["editID"].abs()
+data["userID"] = data["userID"].abs()
+# data['meta_dt'] = pd.to_datetime(data["meta_dt"])
+# print(data['meta_dt'].dt.time)
+article = sqldf("select id as ArticleID,editID, title, schema, namespace, server_url as serveID, meta_request_id as metaID, revision_new, revision_old from data")
+print("article created")
+article.to_csv("csvs/article.csv")
+edit = sqldf("select editID,userID, comment, parsedcomment, timestamp, meta_dt, length_old, length_new, wiki from data")
+print("edit created")
+edit.to_csv("csvs/edit.csv")
+user = sqldf("select userID, user as name, bot, minor,patrolled from data")
+print("user created")
+user.to_csv("csvs/user.csv")
+server = sqldf("select distinct(server_url) as serverID, server_name as Name, server_script_path as scriptPath from data")
+print("server created")
+server.to_csv("csvs/server.csv")
+meta = sqldf("select meta_request_id as metaID, meta_domain as domain, meta_uri as url, meta_stream as stream, meta_topic as topic, meta_dt as dt, meta_partition as partition, meta_offset as offset from data")
+print("meta created")
+meta.to_csv("csvs/meta.csv")
+#print(article.head())
